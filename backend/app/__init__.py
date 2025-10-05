@@ -8,7 +8,9 @@ from app.config import Config
 from app.routes.api_rta_routes import api_rta_bp
 
 def create_app():
-    app = Flask(__name__, static_folder='static', static_url_path='')
+    # Configurar caminho absoluto para arquivos estáticos
+    static_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static'))
+    app = Flask(__name__, static_folder=static_folder, static_url_path='')
     app.config.from_object(Config)
 
     # Configurar CORS de forma simples e robusta
@@ -33,10 +35,16 @@ def create_app():
     # Rota para servir o frontend em produção
     @app.route('/')
     def serve_frontend():
-        if os.path.exists(os.path.join(app.static_folder, 'index.html')):
-            return send_from_directory(app.static_folder, 'index.html')
+        static_path = app.static_folder
+        index_path = os.path.join(static_path, 'index.html')
+        print(f"DEBUG: Static folder: {static_path}")
+        print(f"DEBUG: Index path: {index_path}")
+        print(f"DEBUG: Index exists: {os.path.exists(index_path)}")
+        
+        if os.path.exists(index_path):
+            return send_from_directory(static_path, 'index.html')
         else:
-            return {'message': 'Frontend not built yet. Run the build script first.', 'status': 'development'}, 200
+            return {'message': 'Frontend not built yet. Run the build script first.', 'status': 'development', 'static_folder': static_path}, 200
     
     @app.route('/<path:path>')
     def serve_static_files(path):
@@ -70,8 +78,7 @@ def create_app():
             'name': 'Auto RTA API',
             'version': '1.0.0',
             'endpoints': {
-                'rta': '/api/rta',
-                'health': '/api/health'
+                'rta': '/api/rta'
             }
         }
 
