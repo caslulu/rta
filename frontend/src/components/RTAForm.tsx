@@ -5,6 +5,9 @@ import { z } from 'zod';
 import { FileText, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import type { RTAFormData, APIResponse, InsuranceOption } from '../types/rta';
 
+// Configuração da URL da API baseada no ambiente
+const API_BASE_URL = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
+
 // Validation schema
 const rtaSchema = z.object({
   insurance_company: z.enum(['allstate', 'progressive'], {
@@ -84,8 +87,9 @@ export const RTAForm: React.FC = () => {
 
     try {
       console.log('Enviando dados:', data);
+      console.log('URL da API:', `${API_BASE_URL}/rta`);
       
-      const response = await fetch('http://localhost:5000/api/rta', {
+      const response = await fetch(`${API_BASE_URL}/rta`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,4 +1,5 @@
-from flask import Flask, request, make_response
+import os
+from flask import Flask, request, make_response, send_from_directory
 from flask_cors import CORS
 # from app.extensions import db, migrate  # Não necessário para RTA
 from app.config import Config
@@ -7,7 +8,7 @@ from app.config import Config
 from app.routes.api_rta_routes import api_rta_bp
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='static', static_url_path='')
     app.config.from_object(Config)
 
     # Configurar CORS de forma simples e robusta
@@ -28,6 +29,30 @@ def create_app():
 
     # Registrar blueprints da API
     app.register_blueprint(api_rta_bp)
+    
+    # Rota para servir o frontend em produção
+    @app.route('/')
+    def serve_frontend():
+        if os.path.exists(os.path.join(app.static_folder, 'index.html')):
+            return send_from_directory(app.static_folder, 'index.html')
+        else:
+            return {'message': 'Frontend not built yet. Run the build script first.', 'status': 'development'}, 200
+    
+    @app.route('/<path:path>')
+    def serve_static_files(path):
+        # Se for uma rota de API, não interferir
+        if path.startswith('api/'):
+            return {'error': 'API endpoint not found'}, 404
+        
+        # Tentar servir arquivo estático
+        if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+            return send_from_directory(app.static_folder, path)
+        else:
+            # SPA routing - sempre retornar index.html para rotas do frontend
+            if os.path.exists(os.path.join(app.static_folder, 'index.html')):
+                return send_from_directory(app.static_folder, 'index.html')
+            else:
+                return {'message': 'Frontend not built yet'}, 404
 
     # Criar tabelas do banco de dados - não necessário para RTA
     # with app.app_context():
