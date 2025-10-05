@@ -2,17 +2,25 @@ from datetime import datetime
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import NameObject, NumberObject, TextStringObject
 import io
+import os
 
 class RTAService:
     def __init__(self):
+        # Obter caminho absoluto para os templates
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        assets_dir = os.path.join(current_dir, '..', 'assets')
+        
         self.templates = {
-            'allstate': 'app/assets/rta_template_allstate.pdf',
-            'progressive': 'app/assets/rta_template_progressive.pdf'
+            'allstate': os.path.join(assets_dir, 'rta_template_allstate.pdf'),
+            'progressive': os.path.join(assets_dir, 'rta_template_progressive.pdf')
         }
         
     def get_template_path(self, insurance_company):
         """Retorna o caminho do template baseado na seguradora"""
-        return self.templates.get(insurance_company, self.templates['allstate'])
+        template_path = self.templates.get(insurance_company, self.templates['allstate'])
+        print(f"DEBUG: Tentando acessar template: {template_path}")
+        print(f"DEBUG: Arquivo existe: {os.path.exists(template_path)}")
+        return template_path
 
 
     def _parse_address(self, address, expected_parts=5):
