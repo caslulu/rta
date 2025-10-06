@@ -1,17 +1,23 @@
 export interface RTAFormData {
   // Insurance Company
-  insurance_company: 'allstate' | 'progressive';
+  insurance_company: 'allstate' | 'progressive' | 'geico';
   
   // Seller Information
   seller_name: string;
-  seller_address: string;
+  seller_street: string;
+  seller_city: string;
+  seller_state: string;
+  seller_zipcode: string;
   
   // Owner Information
   owner_name: string;
   owner_dob: string;
   owner_license: string;
-  owner_residential_address: string;
-  owner_license_issued_state?: string;
+  owner_street: string;
+  owner_city: string;
+  owner_state: string;
+  owner_zipcode: string;
+  owner_license_issued_state: string;
   
   // Vehicle Information
   vin: string;
@@ -20,15 +26,15 @@ export interface RTAFormData {
   model: string;
   body_style: string;
   color: string;
-  cylinders?: number;
-  passengers?: number;
-  doors?: number;
-  odometer?: number;
+  cylinders: number;
+  passengers: number;
+  doors: number;
+  odometer: number;
   
   // Previous Title Information
-  previous_title_number?: string;
-  previous_title_state?: string;
-  previous_title_country?: string;
+  previous_title_number: string;
+  previous_title_state: string;
+  previous_title_country: string;
   
   // Sale Information
   gross_sale_price: number;
@@ -36,7 +42,8 @@ export interface RTAFormData {
   
   // Insurance Information
   insurance_effective_date: string;
-  insurance_policy_change_date?: string;
+  insurance_policy_change_date: string;
+}
 }
 
 export interface APIResponse {
@@ -47,7 +54,7 @@ export interface APIResponse {
 }
 
 export interface InsuranceOption {
-  id: 'allstate' | 'progressive';
+  id: 'allstate' | 'progressive' | 'geico';
   name: string;
   description: string;
 }

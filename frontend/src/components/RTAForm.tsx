@@ -10,33 +10,39 @@ const API_BASE_URL = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api'
 
 // Validation schema
 const rtaSchema = z.object({
-  insurance_company: z.enum(['allstate', 'progressive'], {
+  insurance_company: z.enum(['allstate', 'progressive', 'geico'], {
     message: 'Selecione uma seguradora'
   }),
   seller_name: z.string().min(1, 'Nome do vendedor é obrigatório'),
-  seller_address: z.string().min(1, 'Endereço do vendedor é obrigatório'),
+  seller_street: z.string().min(1, 'Rua do vendedor é obrigatória'),
+  seller_city: z.string().min(1, 'Cidade do vendedor é obrigatória'),
+  seller_state: z.string().min(1, 'Estado do vendedor é obrigatório'),
+  seller_zipcode: z.string().min(1, 'CEP do vendedor é obrigatório'),
   owner_name: z.string().min(1, 'Nome do proprietário é obrigatório'),
   owner_dob: z.string().min(1, 'Data de nascimento é obrigatória'),
   owner_license: z.string().min(1, 'Número da licença é obrigatório'),
-  owner_residential_address: z.string().min(1, 'Endereço residencial é obrigatório'),
-  owner_license_issued_state: z.string().optional(),
+  owner_street: z.string().min(1, 'Rua do proprietário é obrigatória'),
+  owner_city: z.string().min(1, 'Cidade do proprietário é obrigatória'),
+  owner_state: z.string().min(1, 'Estado do proprietário é obrigatório'),
+  owner_zipcode: z.string().min(1, 'CEP do proprietário é obrigatório'),
+  owner_license_issued_state: z.string().min(1, 'Estado da licença é obrigatório'),
   vin: z.string().min(17, 'VIN deve ter 17 caracteres').max(17, 'VIN deve ter 17 caracteres'),
   year: z.number().min(1900, 'Ano inválido').max(new Date().getFullYear() + 1, 'Ano inválido'),
   make: z.string().min(1, 'Marca é obrigatória'),
   model: z.string().min(1, 'Modelo é obrigatório'),
   body_style: z.string().min(1, 'Estilo do corpo é obrigatório'),
   color: z.string().min(1, 'Cor é obrigatória'),
-  cylinders: z.number().optional(),
-  passengers: z.number().optional(),
-  doors: z.number().optional(),
-  odometer: z.number().optional(),
-  previous_title_number: z.string().optional(),
-  previous_title_state: z.string().optional(),
-  previous_title_country: z.string().optional(),
+  cylinders: z.number().min(1, 'Número de cilindros é obrigatório'),
+  passengers: z.number().min(1, 'Número de passageiros é obrigatório'),
+  doors: z.number().min(1, 'Número de portas é obrigatório'),
+  odometer: z.number().min(0, 'Odômetro é obrigatório'),
+  previous_title_number: z.string().min(1, 'Número do título anterior é obrigatório'),
+  previous_title_state: z.string().min(1, 'Estado do título anterior é obrigatório'),
+  previous_title_country: z.string().min(1, 'País do título anterior é obrigatório'),
   gross_sale_price: z.number().min(0, 'Preço deve ser positivo'),
   purchase_date: z.string().min(1, 'Data de compra é obrigatória'),
   insurance_effective_date: z.string().min(1, 'Data efetiva do seguro é obrigatória'),
-  insurance_policy_change_date: z.string().optional(),
+  insurance_policy_change_date: z.string().min(1, 'Data de mudança da apólice é obrigatória'),
 });
 
 const insuranceOptions: InsuranceOption[] = [
@@ -49,6 +55,11 @@ const insuranceOptions: InsuranceOption[] = [
     id: 'progressive',
     name: 'Progressive',
     description: 'Template da seguradora Progressive'
+  },
+  {
+    id: 'geico',
+    name: 'Geico',
+    description: 'Template da seguradora Geico'
   }
 ];
 
@@ -240,107 +251,6 @@ export const RTAForm: React.FC = () => {
               )}
             </div>
 
-            {/* Seller Information */}
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-3">
-                🏪 Informações do Vendedor
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="form-label">Nome do Vendedor</label>
-                  <input
-                    type="text"
-                    {...register('seller_name')}
-                    className="form-input"
-                    placeholder="Ex: João Silva"
-                  />
-                  {errors.seller_name && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.seller_name.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="form-label">Endereço do Vendedor</label>
-                  <input
-                    type="text"
-                    {...register('seller_address')}
-                    className="form-input"
-                    placeholder="Ex: 123 Main St, City, State, ZIP"
-                  />
-                  {errors.seller_address && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.seller_address.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Owner Information */}
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-3">
-                👤 Informações do Proprietário
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="form-label">Nome do Proprietário</label>
-                  <input
-                    type="text"
-                    {...register('owner_name')}
-                    className="form-input"
-                    placeholder="Ex: Maria Santos"
-                  />
-                  {errors.owner_name && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_name.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="form-label">Data de Nascimento</label>
-                  <input
-                    type="date"
-                    {...register('owner_dob')}
-                    className="form-input"
-                  />
-                  {errors.owner_dob && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_dob.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="form-label">Número da Licença</label>
-                  <input
-                    type="text"
-                    {...register('owner_license')}
-                    className="form-input"
-                    placeholder="Ex: 123456789"
-                  />
-                  {errors.owner_license && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_license.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="form-label">Estado/País da Licença (Opcional)</label>
-                  <input
-                    type="text"
-                    {...register('owner_license_issued_state')}
-                    className="form-input"
-                    placeholder="Ex: MA"
-                  />
-                  {errors.owner_license_issued_state && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_license_issued_state.message}</p>
-                  )}
-                </div>
-                <div className="md:col-span-2">
-                  <label className="form-label">Endereço Residencial</label>
-                  <input
-                    type="text"
-                    {...register('owner_residential_address')}
-                    className="form-input"
-                    placeholder="Ex: 456 Oak Ave, City, State, ZIP"
-                  />
-                  {errors.owner_residential_address && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_residential_address.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
             {/* Vehicle Information */}
             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-3">
@@ -398,6 +308,52 @@ export const RTAForm: React.FC = () => {
                     <p className="text-red-600 text-sm mt-1 font-medium">{errors.model.message}</p>
                   )}
                 </div>
+                
+                {/* Cilindros, Passageiros e Portas na mesma linha */}
+                <div>
+                  <label className="form-label">Número de Cilindros</label>
+                  <input
+                    type="number"
+                    {...register('cylinders', { valueAsNumber: true })}
+                    className="form-input"
+                    min={1}
+                    max={16}
+                    placeholder="Ex: 4"
+                  />
+                  {errors.cylinders && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.cylinders.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Número de Passageiros</label>
+                  <input
+                    type="number"
+                    {...register('passengers', { valueAsNumber: true })}
+                    className="form-input"
+                    min={1}
+                    max={15}
+                    placeholder="Ex: 5"
+                  />
+                  {errors.passengers && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.passengers.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Número de Portas</label>
+                  <input
+                    type="number"
+                    {...register('doors', { valueAsNumber: true })}
+                    className="form-input"
+                    min={1}
+                    max={6}
+                    placeholder="Ex: 4"
+                  />
+                  {errors.doors && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.doors.message}</p>
+                  )}
+                </div>
+
+                {/* Estilo do Corpo, Cor e Odômetro na mesma linha */}
                 <div>
                   <label className="form-label">Estilo do Corpo</label>
                   <select {...register('body_style')} className="form-select">
@@ -427,49 +383,7 @@ export const RTAForm: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <label className="form-label">Número de Cilindros (Opcional)</label>
-                  <input
-                    type="number"
-                    {...register('cylinders', { valueAsNumber: true })}
-                    className="form-input"
-                    min={1}
-                    max={16}
-                    placeholder="Ex: 4"
-                  />
-                  {errors.cylinders && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.cylinders.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="form-label">Número de Passageiros (Opcional)</label>
-                  <input
-                    type="number"
-                    {...register('passengers', { valueAsNumber: true })}
-                    className="form-input"
-                    min={1}
-                    max={15}
-                    placeholder="Ex: 5"
-                  />
-                  {errors.passengers && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.passengers.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="form-label">Número de Portas (Opcional)</label>
-                  <input
-                    type="number"
-                    {...register('doors', { valueAsNumber: true })}
-                    className="form-input"
-                    min={1}
-                    max={6}
-                    placeholder="Ex: 4"
-                  />
-                  {errors.doors && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.doors.message}</p>
-                  )}
-                </div>
-                <div className="md:col-span-2 lg:col-span-3">
-                  <label className="form-label">Odômetro em Milhas (Opcional)</label>
+                  <label className="form-label">Odômetro em Milhas</label>
                   <input
                     type="number"
                     {...register('odometer', { valueAsNumber: true })}
@@ -484,6 +398,110 @@ export const RTAForm: React.FC = () => {
               </div>
             </div>
 
+            {/* Owner Information */}
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-3">
+                👤 Informações do Proprietário
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="form-label">Nome Completo (Sobrenome, Nome, Nome do Meio)</label>
+                  <input
+                    type="text"
+                    {...register('owner_name')}
+                    className="form-input"
+                    placeholder="Ex: Silva, João, Carlos"
+                  />
+                  {errors.owner_name && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_name.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Data de Nascimento</label>
+                  <input
+                    type="date"
+                    {...register('owner_dob')}
+                    className="form-input"
+                  />
+                  {errors.owner_dob && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_dob.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Número da Licença</label>
+                  <input
+                    type="text"
+                    {...register('owner_license')}
+                    className="form-input"
+                    placeholder="Ex: 123456789"
+                  />
+                  {errors.owner_license && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_license.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Estado/País da Licença</label>
+                  <input
+                    type="text"
+                    {...register('owner_license_issued_state')}
+                    className="form-input"
+                    placeholder="Ex: MA"
+                  />
+                  {errors.owner_license_issued_state && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_license_issued_state.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Rua</label>
+                  <input
+                    type="text"
+                    {...register('owner_street')}
+                    className="form-input"
+                    placeholder="Ex: 456 Oak Ave"
+                  />
+                  {errors.owner_street && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_street.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Cidade</label>
+                  <input
+                    type="text"
+                    {...register('owner_city')}
+                    className="form-input"
+                    placeholder="Ex: Miami"
+                  />
+                  {errors.owner_city && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_city.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Estado</label>
+                  <input
+                    type="text"
+                    {...register('owner_state')}
+                    className="form-input"
+                    placeholder="Ex: FL"
+                  />
+                  {errors.owner_state && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_state.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">CEP</label>
+                  <input
+                    type="text"
+                    {...register('owner_zipcode')}
+                    className="form-input"
+                    placeholder="Ex: 33101"
+                  />
+                  {errors.owner_zipcode && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.owner_zipcode.message}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Previous Title Information */}
             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-3">
@@ -491,7 +509,7 @@ export const RTAForm: React.FC = () => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="form-label">Número do Título Anterior (Opcional)</label>
+                  <label className="form-label">Número do Título Anterior</label>
                   <input
                     type="text"
                     {...register('previous_title_number')}
@@ -503,7 +521,7 @@ export const RTAForm: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <label className="form-label">Estado do Título Anterior (Opcional)</label>
+                  <label className="form-label">Estado do Título Anterior</label>
                   <input
                     type="text"
                     {...register('previous_title_state')}
@@ -515,7 +533,7 @@ export const RTAForm: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <label className="form-label">País do Título Anterior (Opcional)</label>
+                  <label className="form-label">País do Título Anterior</label>
                   <input
                     type="text"
                     {...register('previous_title_country')}
@@ -581,7 +599,7 @@ export const RTAForm: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <label className="form-label">Data de Mudança da Apólice (Opcional)</label>
+                  <label className="form-label">Data de Mudança da Apólice</label>
                   <input
                     type="date"
                     {...register('insurance_policy_change_date')}
@@ -589,6 +607,76 @@ export const RTAForm: React.FC = () => {
                   />
                   {errors.insurance_policy_change_date && (
                     <p className="text-red-600 text-sm mt-1 font-medium">{errors.insurance_policy_change_date.message}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Seller Information */}
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-3">
+                🏪 Informações do Vendedor
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="form-label">Nome do Vendedor</label>
+                  <input
+                    type="text"
+                    {...register('seller_name')}
+                    className="form-input"
+                    placeholder="Ex: João Silva"
+                  />
+                  {errors.seller_name && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.seller_name.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Rua</label>
+                  <input
+                    type="text"
+                    {...register('seller_street')}
+                    className="form-input"
+                    placeholder="Ex: 123 Main St"
+                  />
+                  {errors.seller_street && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.seller_street.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Cidade</label>
+                  <input
+                    type="text"
+                    {...register('seller_city')}
+                    className="form-input"
+                    placeholder="Ex: Boston"
+                  />
+                  {errors.seller_city && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.seller_city.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">Estado</label>
+                  <input
+                    type="text"
+                    {...register('seller_state')}
+                    className="form-input"
+                    placeholder="Ex: MA"
+                    maxLength={2}
+                  />
+                  {errors.seller_state && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.seller_state.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="form-label">CEP/ZIP</label>
+                  <input
+                    type="text"
+                    {...register('seller_zipcode')}
+                    className="form-input"
+                    placeholder="Ex: 02101"
+                  />
+                  {errors.seller_zipcode && (
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.seller_zipcode.message}</p>
                   )}
                 </div>
               </div>

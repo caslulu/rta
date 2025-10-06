@@ -12,7 +12,8 @@ class RTAService:
         
         self.templates = {
             'allstate': os.path.join(assets_dir, 'rta_template_allstate.pdf'),
-            'progressive': os.path.join(assets_dir, 'rta_template_progressive.pdf')
+            'progressive': os.path.join(assets_dir, 'rta_template_progressive.pdf'),
+            'geico': os.path.join(assets_dir, 'rta_template_geico.pdf')
         }
         
     def get_template_path(self, insurance_company):
@@ -22,31 +23,6 @@ class RTAService:
         print(f"DEBUG: Arquivo existe: {os.path.exists(template_path)}")
         return template_path
 
-
-    def _parse_address(self, address, expected_parts=5):
-        # Divide endereço em partes de forma mais inteligente
-        # Formato esperado: "Rua Número, Apt (opcional), Cidade, Estado, CEP"
-        if not address:
-            return [""] * expected_parts
-            
-        parts = [p.strip() for p in str(address).split(",")]
-        
-        # Se temos menos de 3 partes, assumir que é só rua
-        if len(parts) < 3:
-            # Só rua fornecida
-            return [parts[0] if len(parts) > 0 else "", "", "", "", ""]
-        
-        # Se temos 3 partes: Rua, Cidade, Estado
-        elif len(parts) == 3:
-            return [parts[0], "", parts[1], parts[2], ""]
-        
-        # Se temos 4 partes: Rua, Cidade, Estado, CEP
-        elif len(parts) == 4:
-            return [parts[0], "", parts[1], parts[2], parts[3]]
-        
-        # Se temos 5 ou mais partes: Rua, Apt, Cidade, Estado, CEP
-        else:
-            return [parts[0], parts[1], parts[2], parts[3], parts[4] if len(parts) > 4 else ""]
 
     def _format_date(self, date_value):
         """Formata data para MM/DD/YYYY ou retorna string vazia se inválida"""
@@ -107,16 +83,21 @@ class RTAService:
         print(f"  Previous Title State: {data.get('previous_title_state', 'N/A')}")
         print(f"  Previous Title Country: {data.get('previous_title_country', 'N/A')}")
 
-        # Endereço do vendedor
-        seller_rua, seller_apt, seller_cidade, seller_estado, seller_cep = self._parse_address(
-            data.get('seller_address', ''),
-            expected_parts=5
-        )
-        # Endereço do proprietário
-        owner_address_raw = data.get('owner_residential_address', '')
-        print(f"DEBUG - Endereço raw: '{owner_address_raw}'")
-        endereco_rua, endereco_apt, endereco_cidade, endereco_estado, endereco_cep = self._parse_address(owner_address_raw)
-        print(f"DEBUG - Parseado: rua='{endereco_rua}', apt='{endereco_apt}', cidade='{endereco_cidade}', estado='{endereco_estado}', cep='{endereco_cep}'")
+        # Endereço do vendedor - usando campos separados
+        seller_rua = str(data.get('seller_street', ''))
+        seller_cidade = str(data.get('seller_city', ''))
+        seller_estado = str(data.get('seller_state', ''))
+        seller_cep = str(data.get('seller_zipcode', ''))
+        
+        # Endereço do proprietário - usando campos separados
+        endereco_rua = str(data.get('owner_street', ''))
+        endereco_cidade = str(data.get('owner_city', ''))
+        endereco_estado = str(data.get('owner_state', ''))
+        endereco_cep = str(data.get('owner_zipcode', ''))
+        
+        print(f"DEBUG - Endereços separados:")
+        print(f"  Seller: {seller_rua}, {seller_cidade}, {seller_estado}, {seller_cep}")
+        print(f"  Owner: {endereco_rua}, {endereco_cidade}, {endereco_estado}, {endereco_cep}")
 
         # Campos do PDF
         campos = {
@@ -138,7 +119,6 @@ class RTAService:
             "(D3) (Owner 1) Date of Birth (MM [Month]/DD [Day]/YYYY[Year])": formatted_dob,
             "(D4) (Owner 1) License Number/ ID (Identification) Number / SSN (Social Security Number)": str(data.get('owner_license', '')),
             "(D5) (Owner 1) Residential Address": endereco_rua,
-            "(D5) (Owner 1) Apt (Apartment) Number": endereco_apt,
             "(D5) (Owner 1) City": endereco_cidade,
             "(D5) (Owner 1) State": endereco_estado,
             "(D5) (Owner 1) Zip Code": endereco_cep,
