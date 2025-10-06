@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FileText, Download, AlertCircle, CheckCircle } from 'lucide-react';
-import type { RTAFormData, APIResponse, InsuranceOption } from '../types/rta';
+import type { APIResponse, InsuranceOption } from '../types/rta';
 
 // Configuração da URL da API baseada no ambiente
 const API_BASE_URL = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
@@ -27,14 +27,14 @@ const rtaSchema = z.object({
   owner_zipcode: z.string().min(1, 'CEP do proprietário é obrigatório'),
   owner_license_issued_state: z.string().min(1, 'Estado da licença é obrigatório'),
   vin: z.string().min(17, 'VIN deve ter 17 caracteres').max(17, 'VIN deve ter 17 caracteres'),
-  year: z.number().min(1900, 'Ano inválido').max(new Date().getFullYear() + 1, 'Ano inválido'),
+  year: z.number().int().min(1900, 'Ano inválido').max(new Date().getFullYear() + 1, 'Ano inválido'),
   make: z.string().min(1, 'Marca é obrigatória'),
   model: z.string().min(1, 'Modelo é obrigatório'),
   body_style: z.string().min(1, 'Estilo do corpo é obrigatório'),
   color: z.string().min(1, 'Cor é obrigatória'),
-  cylinders: z.number().min(1, 'Número de cilindros é obrigatório'),
-  passengers: z.number().min(1, 'Número de passageiros é obrigatório'),
-  doors: z.number().min(1, 'Número de portas é obrigatório'),
+  cylinders: z.number().int().min(1, 'Número de cilindros é obrigatório'),
+  passengers: z.number().int().min(1, 'Número de passageiros é obrigatório'),
+  doors: z.number().int().min(1, 'Número de portas é obrigatório'),
   odometer: z.number().min(0, 'Odômetro é obrigatório'),
   previous_title_number: z.string().min(1, 'Número do título anterior é obrigatório'),
   previous_title_state: z.string().min(1, 'Estado do título anterior é obrigatório'),
@@ -44,6 +44,8 @@ const rtaSchema = z.object({
   insurance_effective_date: z.string().min(1, 'Data efetiva do seguro é obrigatória'),
   insurance_policy_change_date: z.string().min(1, 'Data de mudança da apólice é obrigatória'),
 });
+
+type RTAFormData = z.infer<typeof rtaSchema>;
 
 const insuranceOptions: InsuranceOption[] = [
   {
@@ -281,7 +283,7 @@ export const RTAForm: React.FC = () => {
                     placeholder="Ex: 2021"
                   />
                   {errors.year && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.year.message}</p>
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.year.message as string}</p>
                   )}
                 </div>
                 <div>
@@ -321,7 +323,7 @@ export const RTAForm: React.FC = () => {
                     placeholder="Ex: 4"
                   />
                   {errors.cylinders && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.cylinders.message}</p>
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.cylinders.message as string}</p>
                   )}
                 </div>
                 <div>
@@ -335,7 +337,7 @@ export const RTAForm: React.FC = () => {
                     placeholder="Ex: 5"
                   />
                   {errors.passengers && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.passengers.message}</p>
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.passengers.message as string}</p>
                   )}
                 </div>
                 <div>
@@ -349,7 +351,7 @@ export const RTAForm: React.FC = () => {
                     placeholder="Ex: 4"
                   />
                   {errors.doors && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.doors.message}</p>
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.doors.message as string}</p>
                   )}
                 </div>
 
@@ -392,7 +394,7 @@ export const RTAForm: React.FC = () => {
                     placeholder="Ex: 25000"
                   />
                   {errors.odometer && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.odometer.message}</p>
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.odometer.message as string}</p>
                   )}
                 </div>
               </div>
@@ -564,7 +566,7 @@ export const RTAForm: React.FC = () => {
                     placeholder="Ex: 25000.00"
                   />
                   {errors.gross_sale_price && (
-                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.gross_sale_price.message}</p>
+                    <p className="text-red-600 text-sm mt-1 font-medium">{errors.gross_sale_price.message as string}</p>
                   )}
                 </div>
                 <div>
