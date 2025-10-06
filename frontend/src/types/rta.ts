@@ -44,7 +44,7 @@ export interface RTAFormData {
   insurance_effective_date: string;
   insurance_policy_change_date: string;
 }
-}
+
 
 export interface APIResponse {
   success?: boolean;
