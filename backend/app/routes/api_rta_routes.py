@@ -34,14 +34,17 @@ def generate_rta():
         
         # Validar campos obrigatórios
         required_fields = [
-            'insurance_company', 'owner_name', 'owner_dob', 'owner_license', 'owner_residential_address',
-            'vin', 'body_style', 'color', 'year', 'make', 'model', 'seller_name', 'seller_address',
-            'gross_sale_price', 'purchase_date', 'insurance_effective_date'
+            'insurance_company', 'owner_name', 'owner_dob', 'owner_license', 
+            'owner_street', 'owner_city', 'owner_state', 'owner_zipcode', 'owner_license_issued_state',
+            'vin', 'body_style', 'color', 'year', 'make', 'model', 'cylinders', 'passengers', 'doors', 'odometer',
+            'previous_title_number', 'previous_title_state', 'previous_title_country',
+            'seller_name', 'seller_street', 'seller_city', 'seller_state', 'seller_zipcode',
+            'gross_sale_price', 'purchase_date', 'insurance_effective_date', 'insurance_policy_change_date'
         ]
         missing_fields = []
         
         for field in required_fields:
-            if field not in data or not data[field]:
+            if field not in data or (data[field] == '' or data[field] is None):
                 missing_fields.append(field)
         
         if missing_fields:
@@ -51,10 +54,17 @@ def generate_rta():
             }), 400
         
         # Validar seguradora
-        if data.get('insurance_company') not in ['allstate', 'progressive']:
+        if data.get('insurance_company') not in ['allstate', 'progressive', 'geico']:
             return jsonify({
-                'error': 'Seguradora deve ser "allstate" ou "progressive"'
+                'error': 'Seguradora deve ser "allstate", "progressive" ou "geico"'
             }), 400
+        
+        # Combinar endereços separados em campos únicos para compatibilidade com o serviço
+        if all(key in data for key in ['owner_street', 'owner_city', 'owner_state', 'owner_zipcode']):
+            data['owner_residential_address'] = f"{data['owner_street']}, {data['owner_city']}, {data['owner_state']}, {data['owner_zipcode']}"
+        
+        if all(key in data for key in ['seller_street', 'seller_city', 'seller_state', 'seller_zipcode']):
+            data['seller_address'] = f"{data['seller_street']}, {data['seller_city']}, {data['seller_state']}, {data['seller_zipcode']}"
         
         # Gerar PDF
         pdf_io = rta_service.preencher_rta(data)

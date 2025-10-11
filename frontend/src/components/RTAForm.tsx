@@ -92,6 +92,13 @@ export const RTAForm: React.FC = () => {
     }
   });
 
+  // Handler para quando a validação falha
+  const onInvalid = (errors: any) => {
+    console.log('Erro de validação:', errors);
+    const errorFields = Object.keys(errors);
+    alert(`Campos obrigatórios faltando: ${errorFields.join(', ')}`);
+  };
+
   const selectedInsurance = watch('insurance_company');
 
   const onSubmit = async (data: RTAFormData) => {
@@ -99,6 +106,23 @@ export const RTAForm: React.FC = () => {
     setApiResponse(null);
 
     try {
+      console.log('Dados do formulário:', data);
+      console.log('Erros de validação:', errors);
+      console.log('Todos os campos:', Object.keys(data));
+      console.log('Campos vazios ou undefined:', Object.entries(data).filter(([, value]) => !value && value !== 0));
+      
+      // Verificar se algum campo obrigatório está vazio
+      const emptyRequiredFields = Object.entries(data).filter(([, value]) => {
+        return !value && value !== 0;
+      });
+      
+      if (emptyRequiredFields.length > 0) {
+        console.log('Campos obrigatórios vazios:', emptyRequiredFields);
+        alert(`Campos obrigatórios faltando: ${emptyRequiredFields.map(([key]) => key).join(', ')}`);
+        setIsSubmitting(false);
+        return;
+      }
+      
       console.log('Enviando dados:', data);
       console.log('URL da API:', `${API_BASE_URL}/rta`);
       
@@ -196,7 +220,7 @@ export const RTAForm: React.FC = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-10">
+          <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="p-8 space-y-10">
             {/* Insurance Company Selection */}
             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-gray-900 border-b border-gray-200 pb-3">
