@@ -32,15 +32,20 @@ def generate_rta():
         if not data:
             return jsonify({'error': 'Dados não fornecidos'}), 400
         
-        # Validar campos obrigatórios
+        # Validar campos obrigatórios base
         required_fields = [
             'insurance_company', 'owner_name', 'owner_dob', 'owner_license', 
             'owner_street', 'owner_city', 'owner_state', 'owner_zipcode', 'owner_license_issued_state',
             'vin', 'body_style', 'color', 'year', 'make', 'model', 'cylinders', 'passengers', 'doors', 'odometer',
-            'previous_title_number', 'previous_title_state', 'previous_title_country',
             'seller_name', 'seller_street', 'seller_city', 'seller_state', 'seller_zipcode',
-            'gross_sale_price', 'purchase_date', 'insurance_effective_date', 'insurance_policy_change_date'
+            'gross_sale_price', 'purchase_date', 'insurance_effective_date', 'insurance_policy_change_date',
+            'vehicle_financing_status'
         ]
+        
+        # Se o veículo for quitado, adicionar campos do título anterior como obrigatórios
+        if data.get('vehicle_financing_status') == 'paid_off':
+            required_fields.extend(['previous_title_number', 'previous_title_state', 'previous_title_country'])
+        
         missing_fields = []
         
         for field in required_fields:
@@ -54,9 +59,9 @@ def generate_rta():
             }), 400
         
         # Validar seguradora
-        if data.get('insurance_company') not in ['allstate', 'progressive', 'geico']:
+        if data.get('insurance_company') not in ['allstate', 'progressive', 'geico', 'liberty']:
             return jsonify({
-                'error': 'Seguradora deve ser "allstate", "progressive" ou "geico"'
+                'error': 'Seguradora deve ser "allstate", "progressive", "geico" ou "liberty"'
             }), 400
         
         # Combinar endereços separados em campos únicos para compatibilidade com o serviço

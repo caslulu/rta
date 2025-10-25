@@ -1,6 +1,6 @@
 export interface RTAFormData {
   // Insurance Company
-  insurance_company: 'allstate' | 'progressive' | 'geico';
+  insurance_company: 'allstate' | 'progressive' | 'geico' | 'liberty';
   
   // Seller Information
   seller_name: string;
@@ -31,10 +31,13 @@ export interface RTAFormData {
   doors: number;
   odometer: number;
   
-  // Previous Title Information
-  previous_title_number: string;
-  previous_title_state: string;
-  previous_title_country: string;
+  // Vehicle Financing Status
+  vehicle_financing_status: 'financed' | 'paid_off';
+  
+  // Previous Title Information (optional for financed vehicles)
+  previous_title_number?: string;
+  previous_title_state?: string;
+  previous_title_country?: string;
   
   // Sale Information
   gross_sale_price: number;
@@ -54,7 +57,7 @@ export interface APIResponse {
 }
 
 export interface InsuranceOption {
-  id: 'allstate' | 'progressive' | 'geico';
+  id: 'allstate' | 'progressive' | 'geico' | 'liberty';
   name: string;
   description: string;
 }

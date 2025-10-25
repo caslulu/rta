@@ -13,7 +13,8 @@ class RTAService:
         self.templates = {
             'allstate': os.path.join(assets_dir, 'rta_template_allstate.pdf'),
             'progressive': os.path.join(assets_dir, 'rta_template_progressive.pdf'),
-            'geico': os.path.join(assets_dir, 'rta_template_geico.pdf')
+            'geico': os.path.join(assets_dir, 'rta_template_geico.pdf'),
+            'liberty': os.path.join(assets_dir, 'rta_template_liberty.pdf')
         }
         
     def get_template_path(self, insurance_company):
