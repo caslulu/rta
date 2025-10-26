@@ -4,7 +4,8 @@ services:
     env: python
     rootDir: .
     buildCommand: |
-      cd frontend && npm ci && npm run build
+      set -e
+      cd frontend && npm ci && npm run build && cd ..
       pip install -r auto-rta/requirements.txt
       pip install -r auto-rta/backend/requirements.txt
     startCommand: |
