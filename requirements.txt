@@ -1,0 +1,5 @@
+# Aggregates backend requirements so legacy build commands on Render keep working.
+# Preferred: install from auto-rta/backend/requirements.txt only.
+# This file exists to make 'pip install -r requirements.txt' succeed in CI/CD environments.
+-r auto-rta/requirements.txt
+-r auto-rta/backend/requirements.txt
