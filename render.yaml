@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: insurance-system
+    env: python
+    rootDir: .
+    buildCommand: |
+      cd frontend && npm ci && npm run build
+      pip install -r auto-rta/requirements.txt
+      pip install -r auto-rta/backend/requirements.txt
+    startCommand: |
+      cd auto-rta && gunicorn -w ${WEB_CONCURRENCY:-2} -b 0.0.0.0:${PORT} start:app
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      - key: NODE_VERSION
+        value: "20"
+      - key: TRELLO_KEY
+        sync: false
+      - key: TRELLO_TOKEN
+        sync: false
+      - key: TRELLO_ID_LIST
+        sync: false

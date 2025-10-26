@@ -11,3 +11,5 @@ requests==2.31.0
 # Pillow==9.5.0 - processamento de imagens
 # requests==2.31.0 - requisições HTTP para APIs
 # playwright==1.36.0 - automação web
+\n+# WSGI server para produção
+gunicorn>=21.2.0
