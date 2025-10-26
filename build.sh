@@ -1,23 +1,23 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -e
 
-echo "🏗️  Building Auto RTA for production..."
+echo "🏗️  Building frontend and preparing backend deps..."
 
-# Build do frontend
-echo "📦 Building frontend..."
-cd frontend
+REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+BACKEND_DIR="$REPO_ROOT/auto-rta"
+
+echo "📦 Building frontend (Vite)"
+pushd "$REPO_ROOT/frontend" >/dev/null
 npm install
 npm run build
+popd >/dev/null
 
-# Move os arquivos built para o backend servir
-echo "📁 Moving frontend build to backend..."
-cd ..
-rm -rf backend/static
-mkdir -p backend/static
-cp -r frontend/dist/* backend/static/
-
-# Instala dependências do backend
-echo "🐍 Installing backend dependencies..."
+echo "🐍 Installing backend requirements"
+pushd "$BACKEND_DIR" >/dev/null
 pip install -r requirements.txt
+if [ -f "$BACKEND_DIR/backend/requirements.txt" ]; then
+  pip install -r backend/requirements.txt
+fi
+popd >/dev/null
 
-echo "✅ Build completed! You can now run 'python start.py'"
-echo "🌐 The app will serve both frontend and backend on the same port"
+echo "✅ Build complete. Static assets in auto-rta/backend/static"

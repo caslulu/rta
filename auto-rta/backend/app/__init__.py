@@ -6,6 +6,7 @@ from app.config import Config
 
 # Importar routes da API
 from app.routes.api_rta_routes import api_rta_bp
+from app.routes.api_trello_routes import api_trello_bp
 
 def create_app():
     # Configurar caminho absoluto para arquivos estáticos
@@ -31,6 +32,7 @@ def create_app():
 
     # Registrar blueprints da API
     app.register_blueprint(api_rta_bp)
+    app.register_blueprint(api_trello_bp)
     
     # Rota para servir o frontend em produção
     @app.route('/')
@@ -78,7 +80,8 @@ def create_app():
             'name': 'Auto RTA API',
             'version': '1.0.0',
             'endpoints': {
-                'rta': '/api/rta'
+                'rta': '/api/rta',
+                'trello': '/api/trello'
             }
         }
 

@@ -1,36 +1,47 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -e
 
-echo "🚀 Starting Auto RTA in development mode..."
+echo "🧪 Starting monorepo dev (frontend + RTA backend)"
 
-# Função para limpar processos ao sair
+REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+BACKEND_DIR="$REPO_ROOT/auto-rta"
+VENV_DIR="$BACKEND_DIR/backend/venv"
+VENV_PY="$VENV_DIR/bin/python"
+
+# Ensure backend venv
+if [ ! -x "$VENV_PY" ]; then
+  echo "📦 Creating backend venv..."
+  python -m venv "$VENV_DIR"
+  "$VENV_PY" -m pip install --upgrade pip
+  echo "📥 Installing backend deps..."
+  "$VENV_PY" -m pip install -r "$BACKEND_DIR/requirements.txt"
+  if [ -f "$BACKEND_DIR/backend/requirements.txt" ]; then
+    "$VENV_PY" -m pip install -r "$BACKEND_DIR/backend/requirements.txt"
+  fi
+fi
+
 cleanup() {
-    echo "🛑 Stopping services..."
-    kill $BACKEND_PID $FRONTEND_PID 2>/dev/null
-    exit 0
+  echo "🛑 Stopping services..."
+  kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
 }
+trap cleanup INT TERM
 
-# Trap para capturar Ctrl+C
-trap cleanup INT
-
-# Inicia o backend
 echo "🐍 Starting backend..."
-cd backend
-python main.py &
+pushd "$BACKEND_DIR" >/dev/null
+"$VENV_PY" start.py &
 BACKEND_PID=$!
+popd >/dev/null
 
-# Aguarda um pouco para o backend iniciar
-sleep 3
+sleep 2
 
-# Inicia o frontend
-echo "⚛️  Starting frontend..."
-cd ../frontend
+echo "⚛️  Starting frontend (Vite)..."
+pushd "$REPO_ROOT/frontend" >/dev/null
+npm install
 npm run dev &
 FRONTEND_PID=$!
+popd >/dev/null
 
-echo "✅ Services started!"
-echo "📱 Frontend: http://localhost:5174"
-echo "🔧 Backend:  http://localhost:5000"
-echo "Press Ctrl+C to stop both services"
+echo "✅ Dev up. Backend PID=$BACKEND_PID, Frontend PID=$FRONTEND_PID"
+echo "Press Ctrl+C to stop."
 
-# Aguarda os processos
 wait

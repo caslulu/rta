@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FileText, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import type { APIResponse, InsuranceOption } from '../types/rta';
+import { decodeVin } from '../utils/vin';
 
 // Configuração da URL da API baseada no ambiente
 const API_BASE_URL = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
@@ -101,7 +102,8 @@ export const RTAForm: React.FC = () => {
     handleSubmit,
     formState: { errors },
     watch,
-    reset
+    reset,
+    setValue
   } = useForm<RTAFormData>({
     resolver: zodResolver(rtaSchema),
     defaultValues: {
@@ -121,6 +123,23 @@ export const RTAForm: React.FC = () => {
 
   const selectedInsurance = watch('insurance_company');
   const financingStatus = watch('vehicle_financing_status');
+  const vinValue = watch('vin');
+
+  // Auto-preencher marca, modelo e ano a partir do VIN (quando completo)
+  useEffect(() => {
+    const run = async () => {
+      const value = (vinValue || '').toUpperCase();
+      if (value.length === 17) {
+        const info = await decodeVin(value);
+        if (info) {
+          if (info.year) setValue('year', Number(info.year));
+          if (info.make) setValue('make', info.make);
+          if (info.model) setValue('model', info.model);
+        }
+      }
+    };
+    run();
+  }, [vinValue, setValue]);
 
   const onSubmit = async (data: RTAFormData) => {
     setIsSubmitting(true);
@@ -312,10 +331,18 @@ export const RTAForm: React.FC = () => {
                     className="form-input"
                     placeholder="Ex: 1HGBH41JXMN109186"
                     maxLength={17}
+                    onChange={(e) => {
+                      // manter VIN sempre em maiúsculas
+                      e.target.value = e.target.value.toUpperCase();
+                    }}
                   />
                   {errors.vin && (
                     <p className="text-red-600 text-sm mt-1 font-medium">{errors.vin.message}</p>
                   )}
+                  {/* Preview do veículo detectado */}
+                  <p className="text-xs text-gray-600 mt-1 italic">
+                    {`${watch('year') || ''} ${watch('make') || ''} ${watch('model') || ''}`.trim()}
+                  </p>
                 </div>
                 <div>
                   <label className="form-label">Ano</label>
