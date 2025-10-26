@@ -6,7 +6,6 @@ services:
     buildCommand: |
       set -e
       cd frontend && npm ci && npm run build && cd ..
-      pip install -r auto-rta/requirements.txt
       pip install -r auto-rta/backend/requirements.txt
     startCommand: |
       cd auto-rta && gunicorn -w ${WEB_CONCURRENCY:-2} -b 0.0.0.0:${PORT} start:app
