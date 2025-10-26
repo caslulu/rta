@@ -7,7 +7,7 @@ import re
 def _formatar_veiculos(veiculos):
     if not veiculos:
         return ''
-        linhas = ["Veículos:"]
+    linhas = ["Veículos:"]
     for idx, v in enumerate(veiculos, 1):
         vin = v.get('vin') or '-'
         placa = v.get('placa') or '-'
@@ -18,32 +18,12 @@ def _formatar_veiculos(veiculos):
         modelo = v.get('modelo') or ''
         mm = f"{ano} {marca} {modelo}".strip() or '-'
         linhas.append(
-                f"🚗 Veículo {idx}:\n"
-                f"  VIN: {vin}\n"
-                f"  Placa: {placa}\n"
-                f"  Veículo: {mm}\n"
-                f"  Estado: {financiado}\n"
-                f"  Tempo com veículo: {tempo}"
-        )
-    return "\n".join(linhas)
-
-def _formatar_pessoas(pessoas):
-    if not pessoas:
-        return ''
-    linhas = ["\nDrivers Adicionais:"]
-    for idx, p in enumerate(pessoas, 1):
-        nome = p.get('nome') or '-'
-        doc = p.get('documento') or '-'
-        dn = p.get('data_nascimento') or '-'
-        par = p.get('parentesco') or '-'
-        gen = p.get('genero') or '-'
-        linhas.append(
-            f"\n👤 Driver {idx}:\n"
-            f"  Nome: {nome}\n"
-            f"  Documento: {doc}\n"
-            f"  Data de Nascimento: {dn}\n"
-            f"  Parentesco: {par}\n"
-            f"  Gênero: {gen}"
+            f"🚗 Veículo {idx}:\n"
+            f"  VIN: {vin}\n"
+            f"  Placa: {placa}\n"
+            f"  Veículo: {mm}\n"
+            f"  Estado: {financiado}\n"
+            f"  Tempo com veículo: {tempo}"
         )
     return "\n".join(linhas)
 
@@ -62,27 +42,48 @@ def _format_us_date(date_str: str) -> str:
         return f"{mm}/{dd}/{y}"
     return s
 
-api_trello_bp = Blueprint('api_trello', __name__, url_prefix='/api')
-
-def _sanitize(text: str) -> str:
-    """Evita vazar credenciais em mensagens de erro."""
-    if not text:
-        return text
+def _formatar_pessoas(pessoas):
+    if not pessoas:
+        return ''
     linhas = ["\nDrivers Adicionais:"]
-    # Remover trechos sensíveis de querystring
-    out = out.replace(os.getenv('TRELLO_KEY', ''), '***') if os.getenv('TRELLO_KEY') else out
-    out = out.replace(os.getenv('TRELLO_TOKEN', ''), '***') if os.getenv('TRELLO_TOKEN') else out
+    for idx, p in enumerate(pessoas, 1):
+        nome = p.get('nome') or '-'
+        doc = p.get('documento') or '-'
         dn_raw = p.get('data_nascimento') or ''
         dn = _format_us_date(dn_raw) if dn_raw else '-'
-    out = out.replace('key=', 'key=***').replace('token=', 'token=***')
-    return out
-
+        par = p.get('parentesco') or '-'
+        gen = p.get('genero') or '-'
+        linhas.append(
             f"\n👤 Driver {idx}:\n"
             f"  Nome: {nome}\n"
             f"  Documento: {doc}\n"
             f"  Data de Nascimento: {dn}\n"
             f"  Parentesco: {par}\n"
             f"  Gênero: {gen}"
+        )
+    return "\n".join(linhas)
+
+api_trello_bp = Blueprint('api_trello', __name__, url_prefix='/api')
+
+def _sanitize(text: str) -> str:
+    """Evita vazar credenciais em mensagens de erro."""
+    if text is None:
+        return text
+    out = str(text)
+    key = os.getenv('TRELLO_KEY')
+    tok = os.getenv('TRELLO_TOKEN')
+    if key:
+        out = out.replace(key, '***')
+    if tok:
+        out = out.replace(tok, '***')
+    out = out.replace('key=', 'key=***').replace('token=', 'token=***')
+    return out
+
+@api_trello_bp.route('/trello/auth-check', methods=['GET'])
+def trello_auth_check():
+    key = os.getenv('TRELLO_KEY')
+    token = os.getenv('TRELLO_TOKEN')
+    list_id = os.getenv('TRELLO_ID_LIST')
     base = 'https://api.trello.com/1'
 
     if not key or not token:
@@ -112,17 +113,7 @@ def _sanitize(text: str) -> str:
 
 @api_trello_bp.route('/trello', methods=['POST'])
 def create_trello_card():
-    """Cria um card no Trello a partir de um JSON simples.
-
-    Espera JSON como:
-    {
-      "nome": "Fulano",
-      "documento": "123456789",
-      "endereco": "Rua X, Cidade, Estado",
-      "email": "opcional@dominio.com",
-      "observacoes": "texto livre"
-    }
-    """
+    """Cria um card no Trello a partir de um JSON simples."""
     try:
         data = request.get_json() or {}
 
@@ -177,7 +168,7 @@ def create_trello_card():
         if data.get('email'):
             linhas.append(f"Email: {data.get('email')}")
 
-        # Conjuge
+        # Cônjuge
         if data.get('nome_conjuge'):
             linhas.append("\nCônjuge:")
             linhas.append(f"Nome: {data.get('nome_conjuge')}")
@@ -206,9 +197,8 @@ def create_trello_card():
         resp = requests.post(url, params=params, timeout=20)
         try:
             resp.raise_for_status()
-        except requests.exceptions.HTTPError as http_err:
+        except requests.exceptions.HTTPError:
             # Retorna mensagem mais clara sem vazar credenciais
-            detail = None
             try:
                 detail = resp.json()
             except Exception:
