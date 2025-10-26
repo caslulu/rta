@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 import os
 import requests
 import re
+import json
+from werkzeug.utils import secure_filename
 
 # Helpers locais para formatar descrição com base no payload enviado
 def _formatar_veiculos(veiculos):
@@ -113,9 +115,29 @@ def trello_auth_check():
 
 @api_trello_bp.route('/trello', methods=['POST'])
 def create_trello_card():
-    """Cria um card no Trello a partir de um JSON simples."""
+    """Cria um card no Trello. Suporta:
+
+    - application/json: body é o payload JSON; sem imagens
+    - multipart/form-data: campo 'payload' (JSON) + 'images' (múltiplos arquivos)
+    """
     try:
-        data = request.get_json() or {}
+        files = []
+        data = {}
+        ct = request.content_type or ''
+        if 'multipart/form-data' in ct:
+            # FormData com JSON + arquivos
+            raw = request.form.get('payload') or request.form.get('data')
+            if raw:
+                try:
+                    data = json.loads(raw)
+                except Exception:
+                    return jsonify({'error': 'payload inválido (JSON malformado)'}), 400
+            else:
+                return jsonify({'error': "Campo 'payload' ausente no form-data"}), 400
+            files = request.files.getlist('images') or []
+        else:
+            # JSON puro
+            data = request.get_json(silent=True) or {}
 
         key = os.getenv('TRELLO_KEY')
         token = os.getenv('TRELLO_TOKEN')
@@ -208,7 +230,30 @@ def create_trello_card():
         json_resp = resp.json()
         card_id = json_resp.get('id')
 
-        return jsonify({'ok': True, 'card_id': card_id}), 201
+        # Se houver arquivos, anexar ao card
+        attach_results = []
+        attach_errors = []
+        if files and card_id:
+            base = 'https://api.trello.com/1'
+            for f in files:
+                try:
+                    fname = secure_filename(f.filename or 'imagem')
+                    files_payload = {'file': (fname, f.stream, f.mimetype or 'application/octet-stream')}
+                    aresp = requests.post(
+                        f"{base}/cards/{card_id}/attachments",
+                        params={'key': key, 'token': token, 'name': fname},
+                        files=files_payload,
+                        timeout=30
+                    )
+                    if aresp.ok:
+                        aj = aresp.json()
+                        attach_results.append({'id': aj.get('id'), 'name': aj.get('name')})
+                    else:
+                        attach_errors.append({'status': aresp.status_code, 'text': aresp.text[:200]})
+                except requests.exceptions.RequestException as e:
+                    attach_errors.append({'error': _sanitize(str(e))[:200]})
+
+        return jsonify({'ok': True, 'card_id': card_id, 'attachments': attach_results, 'attachment_errors': attach_errors}), 201
 
     except requests.exceptions.RequestException as e:
         return jsonify({'error': f'Erro ao comunicar com Trello: {_sanitize(str(e))}'}), 502

@@ -11,7 +11,9 @@ class Config:
     
     # Configurações específicas da API
     API_VERSION = "1.0.0"
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    # Tamanho máximo upload (MB) configurável por env UPLOAD_MAX_MB (default 16)
+    _max_mb = int(os.getenv("UPLOAD_MAX_MB", "16"))
+    MAX_CONTENT_LENGTH = _max_mb * 1024 * 1024
     
     # Configurações de upload/download
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -94,16 +94,42 @@ export const TrelloForm: React.FC = () => {
   const { fields: pessoas, append: addPessoa, remove: removePessoa } = useFieldArray({ control, name: 'pessoas' });
 
   const [result, setResult] = useState<string | null>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+
+  // Limpeza de ObjectURLs quando a lista muda ou no unmount
+  useEffect(() => {
+    return () => {
+      previews.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [previews]);
+
+  const setSelectedFiles = (files: File[]) => {
+    // limpar previews antigos
+    previews.forEach((u) => URL.revokeObjectURL(u));
+    setImages(files);
+    const urls = files.map((f) => URL.createObjectURL(f));
+    setPreviews(urls);
+  };
 
   const onSubmit = async (data: TrelloFormData) => {
     setResult(null);
 
     try {
-      const resp = await fetch(`${API_BASE_URL}/trello`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+      const hasImages = images && images.length > 0;
+      let resp: Response;
+      if (hasImages) {
+        const form = new FormData();
+        form.append('payload', JSON.stringify(data));
+        images.forEach((f) => form.append('images', f, f.name));
+        resp = await fetch(`${API_BASE_URL}/trello`, { method: 'POST', body: form });
+      } else {
+        resp = await fetch(`${API_BASE_URL}/trello`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      }
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: 'Erro desconhecido' }));
@@ -111,11 +137,16 @@ export const TrelloForm: React.FC = () => {
       } else {
         const json = await resp.json().catch(() => null);
         if (json && json.card_id) {
-          setResult(`Card criado com ID: ${json.card_id}`);
+          const attOk = (json.attachments || []).length || 0;
+          const attErr = (json.attachment_errors || []).length || 0;
+          const attMsg = hasImages ? ` (anexos OK: ${attOk}${attErr ? `, erros: ${attErr}` : ''})` : '';
+          setResult(`Card criado com ID: ${json.card_id}${attMsg}`);
           reset();
+          setImages([]);
         } else {
           setResult('Card criado com sucesso');
           reset();
+          setImages([]);
         }
       }
     } catch (e: any) {
@@ -156,7 +187,7 @@ export const TrelloForm: React.FC = () => {
   };
 
   return (
-    <div className="bg-white shadow rounded-xl p-6">
+    <div className="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
       <header className="mb-6">
         <h2 className="text-2xl font-bold">Auto-Trello</h2>
         <p className="text-sm text-gray-600">Preencha os dados do cliente, veículos e drivers para criar o card</p>
@@ -282,7 +313,7 @@ export const TrelloForm: React.FC = () => {
           {errors.veiculos && <p className="text-red-600 text-sm mb-2">{(errors.veiculos as any)?.message || 'Revise os campos dos veículos'}</p>}
           <div className="space-y-4">
             {veiculos.map((field, idx) => (
-              <div key={field.id} className="border rounded-lg p-4 bg-gray-50">
+              <div key={field.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/60">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="form-label">VIN</label>
@@ -335,7 +366,7 @@ export const TrelloForm: React.FC = () => {
           </div>
           <div className="space-y-4">
             {pessoas.map((field, idx) => (
-              <div key={field.id} className="border rounded-lg p-4 bg-gray-50">
+              <div key={field.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/60">
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div className="md:col-span-2">
                     <label className="form-label">Nome</label>
@@ -383,6 +414,48 @@ export const TrelloForm: React.FC = () => {
         <section>
           <h3 className="text-lg font-semibold mb-2">Observações</h3>
           <textarea {...register('observacoes')} className="form-input h-28" placeholder="Informações adicionais" />
+        </section>
+
+        {/* Imagens (opcional) */}
+        <section>
+          <h3 className="text-lg font-semibold mb-2">Imagens (opcional)</h3>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => {
+              const files = Array.from(e.target.files || []);
+              setSelectedFiles(files);
+            }}
+            className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+          />
+          {images.length > 0 && (
+            <>
+              <p className="text-xs text-gray-600 mt-2">{images.length} arquivo(s) selecionado(s).</p>
+              <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                {previews.map((src, i) => (
+                  <div key={src} className="relative group border rounded-lg overflow-hidden bg-white shadow-sm">
+                    <img src={src} alt={images[i]?.name || `imagem-${i+1}`} className="w-full h-24 object-cover" />
+                    <div className="px-2 py-1 text-[10px] text-gray-700 truncate" title={images[i]?.name}>{images[i]?.name}</div>
+                    <button
+                      type="button"
+                      className="absolute top-1 right-1 hidden group-hover:block bg-white/90 border rounded px-1 text-xs"
+                      onClick={() => {
+                        const nextImgs = images.filter((_, idx) => idx !== i);
+                        const toRevoke = previews[i];
+                        if (toRevoke) URL.revokeObjectURL(toRevoke);
+                        const nextPrev = previews.filter((_, idx) => idx !== i);
+                        setImages(nextImgs);
+                        setPreviews(nextPrev);
+                      }}
+                    >
+                      Remover
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </section>
 
         <div className="flex items-center gap-3">

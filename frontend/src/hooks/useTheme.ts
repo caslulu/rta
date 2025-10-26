@@ -9,31 +9,38 @@ export const useTheme = () => {
     if (savedTheme) {
       return savedTheme;
     }
-    
-    // Verificar preferência do sistema
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    
+    // Padrão: claro (independente da preferência do sistema)
     return 'light';
   });
 
   useEffect(() => {
-    // Salvar preferência no localStorage
-    localStorage.setItem('theme', theme);
-    
+    // Persistir preferência
+    try { localStorage.setItem('theme', theme); } catch {}
+
     // Aplicar classe no html para o CSS
     const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    if (theme === 'dark') root.classList.add('dark');
+    else root.classList.remove('dark');
+
+    // Notificar outras instâncias do hook na mesma página
+    try {
+      window.dispatchEvent(new CustomEvent('theme-change', { detail: theme }));
+    } catch {}
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+  // Sincronizar múltiplas instâncias do hook (mesma aba)
+  useEffect(() => {
+    const onThemeChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail as Theme | undefined;
+      if (detail && detail !== theme) {
+        setTheme(detail);
+      }
+    };
+    window.addEventListener('theme-change', onThemeChange as EventListener);
+    return () => window.removeEventListener('theme-change', onThemeChange as EventListener);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
   return { theme, toggleTheme };
 };

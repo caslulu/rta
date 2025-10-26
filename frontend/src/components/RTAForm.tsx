@@ -223,9 +223,9 @@ export const RTAForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-900 py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow-2xl rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 dark:text-gray-100 shadow-2xl rounded-xl overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
             <div className="flex items-center">
@@ -243,16 +243,16 @@ export const RTAForm: React.FC = () => {
 
           {/* Response Message */}
           {apiResponse && (
-            <div className="px-8 py-4 border-b border-gray-200">
+            <div className="px-8 py-4 border-b border-gray-200 dark:border-gray-700">
               {apiResponse.error ? (
-                <div className="flex items-center p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
                   <AlertCircle className="h-5 w-5 text-red-500 mr-3 flex-shrink-0" />
-                  <span className="text-red-800 font-medium">{apiResponse.error}</span>
+                  <span className="text-red-800 dark:text-red-200 font-medium">{apiResponse.error}</span>
                 </div>
               ) : (
-                <div className="flex items-center p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
-                  <span className="text-green-800 font-medium">
+                  <span className="text-green-800 dark:text-green-200 font-medium">
                     RTA gerado com sucesso! O download deve iniciar automaticamente.
                   </span>
                 </div>
